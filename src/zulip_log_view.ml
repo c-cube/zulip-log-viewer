@@ -96,6 +96,22 @@ module Server(Config: sig
   let urldecode = Tiny_httpd_util.percent_decode
   let to_hex s = spf "\"%s\"" @@ CCString.flat_map (fun c -> spf "%x" (Char.code c)) s
 
+  (* the weird '.' encoding into files for topics *)
+  let dotencode_filename s =
+    CCString.flat_map
+      (function
+        | (' ' | '!' | '"' | '#' | '$' | '%' | '&' | '\'' | '*' | '+'
+          | ',' | '/' | ':' | ';' | '=' | '?' | '@' | '[' | ']' | '~'
+          | '^' | '.')
+          as c ->
+          spf ".%X" (Char.code c)
+        | c -> String.make 1 c)
+      s
+
+  let slugify = CCString.map (function ' ' -> '-' | c -> c)
+  let dotencode s = urlencode s |> CCString.map (function ' ' -> '-' | '%' -> '.' | c -> c)
+  let dotdecode s = CCString.map (function '.' -> '%' | c -> c) s |> urldecode
+
   let (//) = Filename.concat
   let (let*?) x f =
     let res =
@@ -148,10 +164,6 @@ module Server(Config: sig
     in
     ret_html h
 
-  let slugify = CCString.map (function ' ' -> '-' | c -> c)
-  let dotencode s = urlencode s |> CCString.map (function ' ' -> '-' | '%' -> '.' | c -> c)
-  let dotdecode s = CCString.map (function '.' -> '%' | c -> c) s |> urldecode
-
   let goto_root () = H.(a ~a:[a_href "/"] [txt "back to root"])
 
   let dir_of_stream id name : string =
@@ -199,7 +211,9 @@ module Server(Config: sig
     Log.debug (fun k->k "at %a: serve topic %d/%s/%s" Date.pp (Date.now()) id strname name);
     let open H in
     let*? h =
-      let file = Config.dir // dir_of_stream id strname // spf "%s.json" (dotencode name) in
+      let file =
+        Config.dir // dir_of_stream id strname
+        // spf "%s.json" (dotencode_filename name) in
       Log.debug (fun k->k "file should be '%s' (exists: %b)" file (Sys.file_exists file));
       let messages = match DJ.decode_file Msg.dec_l file with
         | Ok x -> x
