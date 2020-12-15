@@ -147,14 +147,18 @@ module Server(Config: sig
                 spf "/topic/%d/%s/%s" str.id (urlencode str.name)
                   (urlencode top.title)
               in
-              li [
-                a ~a:[a_href url]
-                  [b [txt top.title]];
-                txt (spf " (date %s)" (Date.to_string top.latest_date));
-                txt (spf " (size %d)" top.size)
+              li ~a:[a_class ["list-group-item"]] [
+                span [
+                  a ~a:[a_href url] [b [txt top.title]]
+                ];
+                span ~a:[a_class ["badge"; "bg-warning"]]
+                  [ txt (spf " %d" top.size) ];
+                span ~a:[a_class ["text-secondary"]] [
+                  txt (spf " [%s]" (Date.to_string top.latest_date));
+                ]
               ]
             in
-            ul @@ List.map h_top str.topic_data
+            ul ~a:[a_class ["list-group"]] @@ List.map h_top str.topic_data
           ];
         ]
       in
