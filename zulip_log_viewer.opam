@@ -1,0 +1,17 @@
+version: "0.1"
+author: "Simon Cruanes"
+maintainer: "Simon Cruanes"
+synopsis: "Simpler viewer for Zulip stream logs"
+build: [
+  ["dune" "build" "@install" "-p" name "-j" jobs]
+  ["dune" "build" "@doc" "-p" name ] {with-doc}
+]
+opam-version: "2.0"
+depends: [
+  "containers" { >= "3.0" & < "4.0" }
+  "decoders-yojson" { >= "0.5.0" & < "0.6.0" }
+  "decoders" { >= "0.5.0" & < "0.6.0" }
+  "tiny_httpd" { >= "0.6" }
+  "logs"
+  "tyxml" { >= "4.0" }
+]

@@ -1,0 +1,16 @@
+(executable
+ (name zulip_log_view)
+ (libraries tiny_httpd decoders-yojson decoders containers logs tyxml)
+ (flags :standard -warn-error -a+8))
+
+(rule
+  (targets web_data.ml)
+  (deps (:css bootstrap.min.css))
+  (action
+    (with-stdout-to %{targets}
+     (progn
+       (echo "let css = {css|")
+       (cat %{css})
+       (echo "|css}")
+      ))))
+
