@@ -94,6 +94,7 @@ module Server(Config: sig
   module Serv = Tiny_httpd
   let urlencode = Tiny_httpd_util.percent_encode
   let urldecode = Tiny_httpd_util.percent_decode
+  let to_hex s = spf "\"%s\"" @@ CCString.flat_map (fun c -> spf "%x" (Char.code c)) s
 
   let (//) = Filename.concat
   let (let*?) x f =
@@ -230,6 +231,15 @@ module Server(Config: sig
     in
     ret_html h
 
+  let css req =
+    let md5 = to_hex @@ Digest.string Web_data.css in
+    if Serv.Request.get_header req "If-None-Match" = Some md5 then (
+      Serv.Response.make_raw ~code:304 "" (* cache hit *)
+    ) else (
+      let headers = ["ETag", md5; "Content-Type", "text/css"] in
+      Serv.Response.make_string ~headers (Ok Web_data.css)
+    )
+
   let run () =
     let server = Serv.create ~port:Config.port () in
     Serv.add_route_handler server Serv.Route.(return) root;
@@ -237,9 +247,7 @@ module Server(Config: sig
       Serv.Route.(exact "stream" @/ int @/ string_urlencoded @/ return) stream;
     Serv.add_route_handler server
       Serv.Route.(exact "topic" @/ int @/ string_urlencoded @/ string_urlencoded @/ return) topic;
-    Serv.add_route_handler server Serv.Route.(exact "css" @/ return) (fun _req ->
-        Serv.Response.make_raw_stream ~code:200 (Serv.Byte_stream.of_string Web_data.css)
-      );
+    Serv.add_route_handler server Serv.Route.(exact "css" @/ return) css;
     Serv.run server
 end
 
