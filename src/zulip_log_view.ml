@@ -11,7 +11,7 @@ module Date = struct
   let now = Unix.gettimeofday
   let to_string self =
     let t = Unix.gmtime self in
-    spf "%d-%d-%d %d:%d:%d (GMT)" (1900+t.tm_year) t.tm_mon t.tm_mday t.tm_hour t.tm_min t.tm_sec
+    spf "%d-%02d-%02d %d:%d:%d (GMT)" (1900+t.tm_year) (1+t.tm_mon) t.tm_mday t.tm_hour t.tm_min t.tm_sec
   let pp out self = Fmt.string out (to_string self)
 end
 
