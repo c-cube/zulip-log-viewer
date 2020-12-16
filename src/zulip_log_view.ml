@@ -105,6 +105,7 @@ module Server(Config: sig
           | '^' | '.')
           as c ->
           spf ".%X" (Char.code c)
+        | c when Char.code c > 127 -> spf ".%X" (Char.code c)
         | c -> String.make 1 c)
       s
 
